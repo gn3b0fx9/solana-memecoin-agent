@@ -1,0 +1,19 @@
+name: Paper Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render paper scan
+        env:
+          RENDER_SCAN_URL: ${{ secrets.RENDER_SCAN_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$RENDER_SCAN_URL"
+          curl --fail --show-error --silent --retry 2 --max-time 30 \
+            -X POST "$RENDER_SCAN_URL/api/scan"
