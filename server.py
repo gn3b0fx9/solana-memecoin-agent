@@ -236,8 +236,27 @@ def home():
         </p>
 
         <p>
-            Posições abertas:
-            <b>{len(positions)}</b>
+            <p>
+    Posições abertas:
+    <b>{len(positions)}</b>
+</p>
+
+<form method="post" action="/api/scan">
+    <button
+        type="submit"
+        style="
+            padding:12px 18px;
+            border:0;
+            border-radius:10px;
+            font-weight:700;
+            font-size:16px;
+        "
+    >
+        🔄 Scan agora
+    </button>
+</form>
+
+</div>
         </p>
 
     </div>
