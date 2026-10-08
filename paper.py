@@ -6,6 +6,7 @@ from market_data import (
     build_candidates,
     helius_mint_info,
     token_pairs_batch,
+    market_status
 )
 from risk import score
 
@@ -248,6 +249,8 @@ def run_scan():
     limit = env_int("SCAN_LIMIT", 20)
 
     candidates = build_candidates(limit)
+    
+    state["market_status"] = market_status()
 
     ranked = []
 
