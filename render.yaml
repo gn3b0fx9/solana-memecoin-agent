@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: solana-memecoin-agent
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: STARTING_EUR
+        value: "20"
+      - key: MAX_POSITION_EUR
+        value: "2"
+      - key: MIN_CASH_EUR
+        value: "8"
+      - key: MAX_DAILY_LOSS_EUR
+        value: "1"
