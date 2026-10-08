@@ -8,17 +8,21 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+
     steps:
       - name: Trigger Render paper scan
         env:
           RENDER_SCAN_URL: ${{ secrets.RENDER_SCAN_URL }}
+
         run: |
           set -eu
+
           test -n "$RENDER_SCAN_URL"
 
           echo "Calling Render..."
-          curl --fail-with-body --show-error \
-            --retry 2 \
+
+          curl --fail-with-body \
+            --show-error \
             --max-time 60 \
             -X POST \
             "$RENDER_SCAN_URL/api/scan"
