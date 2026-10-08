@@ -15,6 +15,16 @@ _PROFILE_CACHE = {
     "data": [],
 }
 
+LAST_MARKET_STATUS = {
+    "ok": True,
+    "stage": "not_scanned",
+    "error": None,
+}
+
+
+def market_status():
+    return LAST_MARKET_STATUS.copy()
+
 
 def _get(url: str, retries: int = 3, **kwargs):
     for attempt in range(retries + 1):
