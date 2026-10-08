@@ -13,7 +13,12 @@ jobs:
         env:
           RENDER_SCAN_URL: ${{ secrets.RENDER_SCAN_URL }}
         run: |
-          set -euo pipefail
+          set -eu
           test -n "$RENDER_SCAN_URL"
-          curl --fail --show-error --silent --retry 2 --max-time 30 \
-            -X POST "$RENDER_SCAN_URL/api/scan"
+
+          echo "Calling Render..."
+          curl --fail-with-body --show-error \
+            --retry 2 \
+            --max-time 60 \
+            -X POST \
+            "$RENDER_SCAN_URL/api/scan"
