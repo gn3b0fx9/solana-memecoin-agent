@@ -5,6 +5,10 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
+      - key: HELIUS_API_KEY
+        sync: false
+      - key: PAPER_MODE
+        value: "true"
       - key: STARTING_EUR
         value: "20"
       - key: MAX_POSITION_EUR
