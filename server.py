@@ -1,4 +1,5 @@
 import os
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
@@ -46,41 +47,87 @@ def home():
     trades = s.get("trades", [])
     candidates = s.get("candidates", [])
 
-    cash = float(s.get("cash_eur", 20))
+    market_status = s.get(
+        "market_status",
+        {
+            "ok": True,
+            "stage": "not_scanned",
+            "error": None,
+        },
+    )
+
+    cash = float(
+        s.get("cash_eur", 20)
+    )
+
     realized = float(
         s.get("realized_pnl_eur", 0)
     )
 
-    position_rows = ""
-
     unrealized = 0.0
 
+    position_rows = ""
+
     for mint, p in positions.items():
-        entry = float(p.get("entry_price", 0))
-        quantity = float(p.get("quantity", 0))
+
+        entry = float(
+            p.get("entry_price", 0)
+        )
+
+        quantity = float(
+            p.get("quantity", 0)
+        )
 
         price = current_price(mint)
 
         if price:
+
             value = quantity * price
-            pnl = value - float(
-                p.get("invested_eur", 0)
+
+            pnl = (
+                value
+                - float(
+                    p.get(
+                        "invested_eur",
+                        0,
+                    )
+                )
             )
+
             unrealized += pnl
-            price_text = f"${price:.8g}"
-            pnl_text = f"€{pnl:+.2f}"
+
+            price_text = (
+                f"${price:.8g}"
+            )
+
+            pnl_text = (
+                f"€{pnl:+.2f}"
+            )
+
         else:
-            value = 0
-            pnl_text = "—"
+
             price_text = "—"
+            pnl_text = "—"
 
         position_rows += f"""
         <tr>
             <td>{p.get("symbol", mint[:6])}</td>
-            <td>€{p.get("invested_eur", 0):.2f}</td>
-            <td>${entry:.8g}</td>
-            <td>{price_text}</td>
-            <td>{pnl_text}</td>
+
+            <td>
+                €{p.get("invested_eur", 0):.2f}
+            </td>
+
+            <td>
+                ${entry:.8g}
+            </td>
+
+            <td>
+                {price_text}
+            </td>
+
+            <td>
+                {pnl_text}
+            </td>
         </tr>
         """
 
@@ -96,14 +143,30 @@ def home():
     candidate_rows = ""
 
     for r in candidates:
+
         candidate_rows += f"""
         <tr>
             <td>{r.get("symbol")}</td>
-            <td>{r.get("score")}</td>
-            <td>${r.get("price_usd", 0):.8g}</td>
-            <td>${r.get("liquidity_usd", 0):,.0f}</td>
-            <td>${r.get("volume_24h_usd", 0):,.0f}</td>
-            <td>{r.get("price_change_1h", 0):.1f}%</td>
+
+            <td>
+                {r.get("score")}
+            </td>
+
+            <td>
+                ${r.get("price_usd", 0):.8g}
+            </td>
+
+            <td>
+                ${r.get("liquidity_usd", 0):,.0f}
+            </td>
+
+            <td>
+                ${r.get("volume_24h_usd", 0):,.0f}
+            </td>
+
+            <td>
+                {r.get("price_change_1h", 0):.1f}%
+            </td>
         </tr>
         """
 
@@ -118,20 +181,36 @@ def home():
 
     trade_rows = ""
 
-    for t in reversed(trades[-10:]):
+    for t in reversed(
+        trades[-10:]
+    ):
+
         pnl = t.get("pnl_eur")
 
         if pnl is None:
             pnl_text = "—"
         else:
-            pnl_text = f"€{float(pnl):+.2f}"
+            pnl_text = (
+                f"€{float(pnl):+.2f}"
+            )
 
         trade_rows += f"""
         <tr>
-            <td>{t.get("side")}</td>
-            <td>{t.get("symbol", "—")}</td>
-            <td>{pnl_text}</td>
-            <td>{t.get("reason", "—")}</td>
+            <td>
+                {t.get("side")}
+            </td>
+
+            <td>
+                {t.get("symbol", "—")}
+            </td>
+
+            <td>
+                {pnl_text}
+            </td>
+
+            <td>
+                {t.get("reason", "—")}
+            </td>
         </tr>
         """
 
@@ -144,22 +223,56 @@ def home():
         </tr>
         """
 
-    total_equity = cash + sum(
-        float(p.get("invested_eur", 0))
-        for p in positions.values()
-    ) + unrealized
+    total_equity = (
+        cash
+        + sum(
+            float(
+                p.get(
+                    "invested_eur",
+                    0,
+                )
+            )
+            for p in positions.values()
+        )
+        + unrealized
+    )
+
+    if market_status.get("ok"):
+        market_text = (
+            "🟢 OK — "
+            + str(
+                market_status.get(
+                    "stage",
+                    "unknown",
+                )
+            )
+        )
+    else:
+        market_text = (
+            "🔴 ERRO — "
+            + str(
+                market_status.get(
+                    "error",
+                    "unknown",
+                )
+            )
+        )
 
     return f"""
     <!doctype html>
 
     <html>
 
+    <head>
+
     <meta
         name="viewport"
         content="width=device-width,initial-scale=1"
     >
 
-    <title>Solana Agent</title>
+    <title>
+        Solana Agent
+    </title>
 
     <style>
 
@@ -188,6 +301,23 @@ def home():
         font-weight: 700;
     }}
 
+    .status {{
+        background: #222;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        word-break: break-word;
+    }}
+
+    button {{
+        padding: 13px 18px;
+        border: 0;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 8px;
+    }}
+
     table {{
         width: 100%;
         font-size: 12px;
@@ -195,7 +325,8 @@ def home():
         min-width: 500px;
     }}
 
-    td, th {{
+    td,
+    th {{
         padding: 7px;
         border-bottom: 1px solid #333;
         text-align: left;
@@ -203,9 +334,16 @@ def home():
 
     </style>
 
+    </head>
+
+    <body>
+
+
     <div class="card">
 
-        <h2>🤖 Solana Memecoin Agent</h2>
+        <h2>
+            🤖 Solana Memecoin Agent
+        </h2>
 
         <div class="safe">
             PAPER MODE — REAL MONEY OFF
@@ -227,44 +365,57 @@ def home():
 
         <p>
             P&L realizado:
-            <b>€{realized:+.2f}</b>
+            <b>
+                €{realized:+.2f}
+            </b>
         </p>
 
         <p>
             P&L aberto:
-            <b>€{unrealized:+.2f}</b>
+            <b>
+                €{unrealized:+.2f}
+            </b>
         </p>
 
         <p>
-            <p>
-    Posições abertas:
-    <b>{len(positions)}</b>
-</p>
-
-<form method="post" action="/api/scan">
-    <button
-        type="submit"
-        style="
-            padding:12px 18px;
-            border:0;
-            border-radius:10px;
-            font-weight:700;
-            font-size:16px;
-        "
-    >
-        🔄 Scan agora
-    </button>
-</form>
-
-</div>
+            Posições abertas:
+            <b>
+                {len(positions)}
+            </b>
         </p>
+
+        <form
+            method="post"
+            action="/api/scan"
+        >
+
+            <button type="submit">
+                🔄 Scan agora
+            </button>
+
+        </form>
 
     </div>
 
 
     <div class="card">
 
-        <h3>📊 Posições abertas</h3>
+        <h3>
+            🔎 Estado do mercado
+        </h3>
+
+        <div class="status">
+            {market_text}
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>
+            📊 Posições abertas
+        </h3>
 
         <table>
 
@@ -285,7 +436,9 @@ def home():
 
     <div class="card">
 
-        <h3>🎯 Top candidates</h3>
+        <h3>
+            🎯 Top candidates
+        </h3>
 
         <table>
 
@@ -307,7 +460,9 @@ def home():
 
     <div class="card">
 
-        <h3>📜 Últimos trades</h3>
+        <h3>
+            📜 Últimos trades
+        </h3>
 
         <table>
 
@@ -324,5 +479,8 @@ def home():
 
     </div>
 
+
+    </body>
+
     </html>
-    """
+    """ 
