@@ -63,10 +63,14 @@ def latest_solana_profiles(limit=20) -> list[dict[str, Any]]:
             f"{DEX}/token-profiles/latest/v1",
             retries=2,
         )
-    except requests.RequestException:
-        # If DEX Screener is temporarily rate-limited,
-        # use recent cached data instead of crashing.
-        return _PROFILE_CACHE["data"][:limit]
+    except requests.RequestException as e:
+    LAST_MARKET_STATUS.update({
+        "ok": False,
+        "stage": "profiles",
+        "error": str(e),
+    })
+
+    return _PROFILE_CACHE["data"][:limit]
 
     out = []
 
@@ -79,6 +83,12 @@ def latest_solana_profiles(limit=20) -> list[dict[str, Any]]:
 
     _PROFILE_CACHE["ts"] = now
     _PROFILE_CACHE["data"] = out
+    
+    LAST_MARKET_STATUS.update({
+    "ok": True,
+    "stage": "profiles_ok",
+    "error": None,
+})
 
     return out
 
@@ -93,8 +103,14 @@ def token_pairs_batch(mints: list[str]) -> list[dict[str, Any]]:
 
     try:
         data = _get(url, retries=2)
-    except requests.RequestException:
-        return []
+    except requests.RequestException as e:
+    LAST_MARKET_STATUS.update({
+        "ok": False,
+        "stage": "token_pairs",
+        "error": str(e),
+    })
+
+    return []
 
     return [
         p for p in data
